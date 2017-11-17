@@ -87,7 +87,6 @@ startone(void)
 		putchar('@');
 		exit(0);
 	}
-
 }
 
 static int
