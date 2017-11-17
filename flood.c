@@ -37,14 +37,14 @@ parseopts(int argc, char **argv)
 		switch (c) {
 		case 'd':
 			delay = strtol(optarg, &end, 10);
-			if (delay < 0 || *end != '\0') {
+			if (delay < 0 || **end) {
 				fputs("invalid delay (-d)\n", stderr);
 				exit(1);
 			}
 			break;
 		case 'j':
 			maxjobs = strtol(optarg, &end, 10);
-			if (maxjobs < 0 || *end != '\0') {
+			if (maxjobs < 0 || **end) {
 				fputs("invalid maxjobs (-j)\n", stderr);
 				exit(1);
 			}
@@ -155,10 +155,8 @@ main(int argc, char **argv)
 		do {
 			if (bsigint)
 				break;
-
 			while (drainone(maxjobs && numjobs >= maxjobs) != -1)
 				;
-
 #ifdef SIGINFO
 			if (bsiginfo) {
 				pstatus();
