@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -6,6 +7,9 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+
+static const char usage[] =
+"usage: flood [-d delay] command [argument ...]\n";
 
 static void
 onsigchld(int sig)
@@ -21,12 +25,32 @@ onsigchld(int sig)
 int
 main(int argc, char **argv)
 {
-	int outfd;
+	int c, outfd;
+	char *end;
 	long delay = 100;
 	struct timespec ts;
 
-	if (argc < 2) {
-		fputs("usage: flood command [argument ...]\n", stderr);
+	while ((c = getopt(argc, argv, "d:")) != -1) {
+		switch (c) {
+		case 'd':
+			delay = strtol(optarg, &end, 10);
+			if (delay < 0 || *end != '\0') {
+				fputs("invalid delay (-d)\n", stderr);
+				return 1;
+			}
+			break;
+
+		default:
+			fputs(usage, stderr);
+			return 1;
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc < 1) {
+		fputs(usage, stderr);
 		return 1;
 	}
 
@@ -45,7 +69,7 @@ main(int argc, char **argv)
 				goto err;
 			dup2(outfd, STDOUT_FILENO);
 			close(outfd);
-			execvp(argv[1], argv+1);
+			execvp(argv[0], argv);
 		err:
 			putchar('@');
 			return 0;
