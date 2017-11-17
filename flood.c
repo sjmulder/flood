@@ -153,6 +153,9 @@ main(int argc, char **argv)
 		ts.tv_nsec = (delay % 1000) * 1e6;
 
 		do {
+			if (bsigint)
+				break;
+
 			while (drainone(maxjobs && numjobs >= maxjobs) != -1)
 				;
 
