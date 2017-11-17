@@ -85,6 +85,7 @@ main(int argc, char **argv)
 			if ((outfd = open("/dev/null", 0)) == -1)
 				goto err;
 			dup2(outfd, STDOUT_FILENO);
+			dup2(outfd, STDERR_FILENO);
 			close(outfd);
 			execvp(argv[0], argv);
 		err:
