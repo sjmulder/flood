@@ -13,27 +13,34 @@ static const char usage[] =
 "usage: flood [-d delay] [-j maxjobs] command [argument ...]\n";
 
 static int maxjobs, numjobs, numfailed, numgood;
+static int bsiginfo;
 
-static void
-onsigchld(int sig)
+static void onsigchld(int sig) { }
+static void onsiginfo(int sig) { bsiginfo = 1; }
+
+static int
+drainone(int bblock)
 {
 	int status;
 
-	while (waitpid(0, &status, WNOHANG) > 0) {
-		numjobs--;
-		if (status) {
-			numfailed++;
-			putchar('!');
-		} else {
-			numgood++;
-			putchar('*');
-		}
-		fflush(stdout);
+	if (waitpid(0, &status, bblock ? 0 : WNOHANG) <= 0)
+		return -1;
+
+	numjobs--;
+	if (status) {
+		numfailed++;
+		putchar('!');
+	} else {
+		numgood++;
+		putchar('*');
 	}
+
+	fflush(stdout);
+	return 0;
 }
 
 static void
-onsiginfo(int sig)
+pstatus()
 {
 	int goodpct, badpct;
 
@@ -56,7 +63,6 @@ main(int argc, char **argv)
 	char *end;
 	long delay = 100;
 	struct timespec ts;
-	sigset_t sigset;
 
 	while ((c = getopt(argc, argv, "d:j:")) != -1) {
 		switch (c) {
@@ -91,11 +97,7 @@ main(int argc, char **argv)
 	signal(SIGCHLD, onsigchld);
 	signal(SIGINFO, onsiginfo);
 
-	sigemptyset(&sigset);
-
 	while (1) {
-		while (maxjobs && numjobs >= maxjobs)
-			sigsuspend(&sigset);
 
 		numjobs++;
 
@@ -121,7 +123,14 @@ main(int argc, char **argv)
 		ts.tv_sec = delay / 1000;
 		ts.tv_nsec = (delay % 1000) * 1e6;
 
-		while (nanosleep(&ts, &ts) == -1 && errno == EINTR)
-			;
+		do {
+			while (drainone(maxjobs && numjobs >= maxjobs) != -1)
+				;
+
+			if (bsiginfo) {
+				pstatus();
+				bsiginfo = 0;
+			}
+		} while (nanosleep(&ts, &ts) == -1 && errno == EINTR);
 	}
 }
