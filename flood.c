@@ -17,8 +17,10 @@ static const char usage[] =
 static char **cmdargs;
 static int delay = 100, maxjobs;
 static int numjobs, numfailed, numgood;
+static int bsigint;
 
 static void onsigchld(int sig) { }
+static void onsigint(int sig)  { bsigint = 1; }
 
 #ifdef SIGINFO
 static int bsiginfo;
@@ -109,7 +111,6 @@ drainone(int bblock)
 	return 0;
 }
 
-#ifdef SIGINFO
 static void
 pstatus(void)
 {
@@ -131,7 +132,6 @@ pstatus(void)
 		puts("failed:         0");
 	}
 }
-#endif
 
 int
 main(int argc, char **argv)
@@ -141,11 +141,12 @@ main(int argc, char **argv)
 	parseopts(argc, argv);
 
 	signal(SIGCHLD, onsigchld);
+	signal(SIGINT, onsigint);
 #ifdef SIGINFO
 	signal(SIGINFO, onsiginfo);
 #endif
 
-	while (1) {
+	while (!bsigint) {
 		startone();
 
 		ts.tv_sec = delay / 1000;
@@ -163,4 +164,8 @@ main(int argc, char **argv)
 #endif
 		} while (nanosleep(&ts, &ts) == -1 && errno == EINTR);
 	}
+
+	putchar('\n');
+	pstatus();
+	return 0;
 }
