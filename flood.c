@@ -7,9 +7,12 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include <signal.h>
 
 static const char usage[] =
-"usage: flood [-d delay] command [argument ...]\n";
+"usage: flood [-d delay] [-j maxjobs] command [argument ...]\n";
+
+static int maxjobs, numjobs;
 
 static void
 onsigchld(int sig)
@@ -17,6 +20,7 @@ onsigchld(int sig)
 	int status;
 
 	while (waitpid(0, &status, WNOHANG) > 0) {
+		numjobs--;
 		putchar(status ? '!' : '*');
 		fflush(stdout);
 	}
@@ -29,8 +33,9 @@ main(int argc, char **argv)
 	char *end;
 	long delay = 100;
 	struct timespec ts;
+	sigset_t sigset;
 
-	while ((c = getopt(argc, argv, "d:")) != -1) {
+	while ((c = getopt(argc, argv, "d:j:")) != -1) {
 		switch (c) {
 		case 'd':
 			delay = strtol(optarg, &end, 10);
@@ -39,7 +44,13 @@ main(int argc, char **argv)
 				return 1;
 			}
 			break;
-
+		case 'j':
+			maxjobs = strtol(optarg, &end, 10);
+			if (maxjobs < 0 || *end != '\0') {
+				fputs("invalid maxjobs (-j)\n", stderr);
+				return 1;
+			}
+			break;
 		default:
 			fputs(usage, stderr);
 			return 1;
@@ -55,8 +66,14 @@ main(int argc, char **argv)
 	}
 
 	signal(SIGCHLD, onsigchld);
+	sigemptyset(&sigset);
 
 	while (1) {
+		while (maxjobs && numjobs >= maxjobs)
+			sigsuspend(&sigset);
+
+		numjobs++;
+
 		putchar('.');
 		fflush(stdout);
 
