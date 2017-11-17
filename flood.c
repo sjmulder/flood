@@ -12,11 +12,76 @@
 static const char usage[] =
 "usage: flood [-d delay] [-j maxjobs] command [argument ...]\n";
 
-static int maxjobs, numjobs, numfailed, numgood;
+static char **cmdargs;
+static int delay = 100, maxjobs;
+static int numjobs, numfailed, numgood;
 static int bsiginfo;
 
 static void onsigchld(int sig) { }
 static void onsiginfo(int sig) { bsiginfo = 1; }
+
+static void
+parseopts(int argc, char **argv)
+{
+	int c;
+	char *end;
+
+	while ((c = getopt(argc, argv, "d:j:")) != -1) {
+		switch (c) {
+		case 'd':
+			delay = strtol(optarg, &end, 10);
+			if (delay < 0 || *end != '\0') {
+				fputs("invalid delay (-d)\n", stderr);
+				exit(1);
+			}
+			break;
+		case 'j':
+			maxjobs = strtol(optarg, &end, 10);
+			if (maxjobs < 0 || *end != '\0') {
+				fputs("invalid maxjobs (-j)\n", stderr);
+				exit(1);
+			}
+			break;
+		default:
+			fputs(usage, stderr);
+			exit(1);
+		}
+	}
+
+	cmdargs = argv + optind;
+	if (!*cmdargs) {
+		fputs(usage, stderr);
+		exit(1);
+	}
+}
+
+static void
+startone(void)
+{
+	int outfd;
+
+	numjobs++;
+
+	putchar('.');
+	fflush(stdout);
+
+	switch (fork()) {
+	case -1:
+		perror(NULL);
+		exit(1);
+	case 0:
+		if ((outfd = open("/dev/null", 0)) == -1)
+			goto err;
+		dup2(outfd, STDOUT_FILENO);
+		dup2(outfd, STDERR_FILENO);
+		close(outfd);
+		execvp(*cmdargs, cmdargs);
+	err:
+		putchar('@');
+		exit(0);
+	}
+
+}
 
 static int
 drainone(int bblock)
@@ -40,7 +105,7 @@ drainone(int bblock)
 }
 
 static void
-pstatus()
+pstatus(void)
 {
 	int goodpct, badpct;
 
@@ -64,66 +129,15 @@ pstatus()
 int
 main(int argc, char **argv)
 {
-	int c, outfd;
-	char *end;
-	long delay = 100;
 	struct timespec ts;
 
-	while ((c = getopt(argc, argv, "d:j:")) != -1) {
-		switch (c) {
-		case 'd':
-			delay = strtol(optarg, &end, 10);
-			if (delay < 0 || *end != '\0') {
-				fputs("invalid delay (-d)\n", stderr);
-				return 1;
-			}
-			break;
-		case 'j':
-			maxjobs = strtol(optarg, &end, 10);
-			if (maxjobs < 0 || *end != '\0') {
-				fputs("invalid maxjobs (-j)\n", stderr);
-				return 1;
-			}
-			break;
-		default:
-			fputs(usage, stderr);
-			return 1;
-		}
-	}
-
-	argc -= optind;
-	argv += optind;
-
-	if (argc < 1) {
-		fputs(usage, stderr);
-		return 1;
-	}
+	parseopts(argc, argv);
 
 	signal(SIGCHLD, onsigchld);
 	signal(SIGINFO, onsiginfo);
 
 	while (1) {
-
-		numjobs++;
-
-		putchar('.');
-		fflush(stdout);
-
-		switch (fork()) {
-		case -1:
-			perror(NULL);
-			return 1;
-		case 0:
-			if ((outfd = open("/dev/null", 0)) == -1)
-				goto err;
-			dup2(outfd, STDOUT_FILENO);
-			dup2(outfd, STDERR_FILENO);
-			close(outfd);
-			execvp(argv[0], argv);
-		err:
-			putchar('@');
-			return 0;
-		}
+		startone();
 
 		ts.tv_sec = delay / 1000;
 		ts.tv_nsec = (delay % 1000) * 1e6;
