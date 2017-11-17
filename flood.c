@@ -75,7 +75,7 @@ startone(void)
 		perror(NULL);
 		exit(1);
 	case 0:
-		if ((outfd = open("/dev/null", 0)) == -1)
+		if ((outfd = open("/dev/null", O_WRONLY)) == -1)
 			goto err;
 		dup2(outfd, STDOUT_FILENO);
 		dup2(outfd, STDERR_FILENO);
