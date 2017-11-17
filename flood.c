@@ -49,11 +49,16 @@ pstatus()
 	else
 		printf("running:   %6d\n", numjobs);
 
-	goodpct = (numgood   * 100) / (numgood + numfailed);
-	badpct  = (numfailed * 100) / (numgood + numfailed);
+	if (numgood + numfailed) {
+		goodpct = (numgood   * 100) / (numgood + numfailed);
+		badpct  = (numfailed * 100) / (numgood + numfailed);
 
-	printf("completed: %6d (%3d%%)\n", numgood, goodpct);
-	printf("failed:    %6d (%3d%%)\n", numfailed, badpct);
+		printf("completed: %6d (%3d%%)\n", numgood, goodpct);
+		printf("failed:    %6d (%3d%%)\n", numfailed, badpct);
+	} else {
+		puts("completed:      0");
+		puts("failed:         0");
+	}
 }
 
 int
