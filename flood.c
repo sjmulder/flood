@@ -1,66 +1,60 @@
 #include <stdio.h>
-#include <errno.h>
-#include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <string.h>
+#include <time.h>
 
-static int
-supervize(char **argv)
+static void
+onsigchld(int sig)
 {
-	pid_t pid;
-	int outfd, status;
+	int status;
 
-	putchar('.');
-	fflush(stdout);
-
-	switch ((pid = fork())) {
-	case 0:
-		if ((outfd = open("/dev/null", 0)) == -1) {
-			putchar('@');
-			return 1;
-		}
-		dup2(outfd, STDOUT_FILENO);
-		close(outfd);
-		execvp(argv[0], argv);
-	case -1:
-		putchar('@');
-		return 1;
-	default:
-		waitpid(pid, &status, 0);	
+	while (waitpid(0, &status, WNOHANG) > 0) {
 		putchar(status ? '!' : '*');
-		return 0;
+		fflush(stdout);
 	}
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
-	pid_t pid;
-	int err, status;
+	int outfd;
+	long delay = 100;
+	struct timespec ts;
 
 	if (argc < 2) {
-		fputs("usage: flood <command> <arguments ...>\n", stderr);
+		fputs("usage: flood command [argument ...]\n", stderr);
 		return 1;
 	}
 
+	signal(SIGCHLD, onsigchld);
+
 	while (1) {
-		switch ((pid = fork())) {
+		putchar('.');
+		fflush(stdout);
+
+		switch (fork()) {
 		case -1:
-			err = errno;
-			goto error;
+			perror(NULL);
+			return 1;
 		case 0:
-			return supervize(argv+1);
+			if ((outfd = open("/dev/null", 0)) == -1)
+				goto err;
+			dup2(outfd, STDOUT_FILENO);
+			close(outfd);
+			execvp(argv[1], argv+1);
+		err:
+			putchar('@');
+			return 0;
 		}
 
-		usleep(1e4);
-	}
+		ts.tv_sec = delay / 1000;
+		ts.tv_nsec = (delay % 1000) * 1e6;
 
-error:
-	while (wait(&status) != -1)
-		;
-	if (errno != ECHILD)
-		perror(NULL);
-	fprintf(stderr, "%s\n", strerror(err));
-	return 1;
+		while (nanosleep(&ts, &ts) == -1 && errno == EINTR)
+			;
+	}
 }
