@@ -12,7 +12,7 @@
 static const char usage[] =
 "usage: flood [-d delay] [-j maxjobs] command [argument ...]\n";
 
-static int maxjobs, numjobs;
+static int maxjobs, numjobs, numfailed, numgood;
 
 static void
 onsigchld(int sig)
@@ -21,9 +21,32 @@ onsigchld(int sig)
 
 	while (waitpid(0, &status, WNOHANG) > 0) {
 		numjobs--;
-		putchar(status ? '!' : '*');
+		if (status) {
+			numfailed++;
+			putchar('!');
+		} else {
+			numgood++;
+			putchar('*');
+		}
 		fflush(stdout);
 	}
+}
+
+static void
+onsiginfo(int sig)
+{
+	int goodpct, badpct;
+
+	if (maxjobs)
+		printf("running:   %6d/%d\n", numjobs, maxjobs);
+	else
+		printf("running:   %6d\n", numjobs);
+
+	goodpct = (numgood   * 100) / (numgood + numfailed);
+	badpct  = (numfailed * 100) / (numgood + numfailed);
+
+	printf("completed: %6d (%3d%%)\n", numgood, goodpct);
+	printf("failed:    %6d (%3d%%)\n", numfailed, badpct);
 }
 
 int
@@ -66,6 +89,8 @@ main(int argc, char **argv)
 	}
 
 	signal(SIGCHLD, onsigchld);
+	signal(SIGINFO, onsiginfo);
+
 	sigemptyset(&sigset);
 
 	while (1) {
