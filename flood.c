@@ -170,5 +170,7 @@ main(int argc, char **argv)
 
 	putchar('\n');
 	pstatus();
+	signal(SIGINT, SIG_DFL);
+	raise(SIGINT);
 	return 0;
 }
