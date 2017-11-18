@@ -43,14 +43,13 @@ before starting a new one.
 **-n** *count*
 
 Limits the total number of command invocations.  Once reached,
-flood waits for all previously launched command to complete,
+flood waits for all previously launched commands to complete,
 prints a tally, and exits.
 
 Examlpes
 --------
 
-Flood *example.com* with 100 requests using *curl(1)* (don't do this), then
-print a tally:
+Flood *example.com* with 100 requests using *curl(1)* then print a tally:
 
     $ flood -n100 curl example.com
 

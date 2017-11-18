@@ -47,13 +47,13 @@ waits for previously invoked commands to complete before starting a new one.
 Limits the total number of command invocations.
 Once reached,
 .Nm
-waits for all previously launched command to complete,
+waits for all previously launched commands to complete,
 prints a tally, and exits.
 .El
 .Sh EXAMPLES
 Flood example.com with 100 requests using
 .Xr curl 1
-(don't do this), then print a tally:
+and print a tally:
 .Pp
 .Dl $ flood -n100 curl example.com
 .Pp
