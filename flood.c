@@ -158,7 +158,7 @@ main(int argc, char **argv)
 
 		if (delay) {
 			ts.tv_sec = delay / 1000;
-			ts.tv_nsec = (delay % 1000) * 1e6;
+			ts.tv_nsec = (long)(delay % 1000) * 1000 * 1000;
 		}
 
 		do {
