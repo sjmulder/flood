@@ -13,7 +13,6 @@
 #include <signal.h>
 #include <limits.h>
 
-#define ELPOLL 0
 #define ELWAIT 1
 
 static const char usage[] =
@@ -204,7 +203,7 @@ main(int argc, char **argv)
 			evtloop(ELWAIT);
 
 		startone();
-		evtloop(ELPOLL);
+		evtloop(0);
 
 		if (delay) {
 			ts.tv_sec = delay / 1000;
@@ -214,7 +213,7 @@ main(int argc, char **argv)
 			   a child terminates; which will be handled by
 			   evtloop() */
 			while (nanosleep(&ts, &ts) == -1 && errno == EINTR)
-				evtloop(ELPOLL);
+				evtloop(0);
 		}
 	}
 
