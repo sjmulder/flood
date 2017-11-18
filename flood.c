@@ -37,14 +37,14 @@ parseopts(int argc, char **argv)
 		switch (c) {
 		case 'd':
 			delay = strtol(optarg, &end, 10);
-			if (delay < 0 || **end) {
+			if (delay < 0 || *end) {
 				fputs("invalid delay (-d)\n", stderr);
 				exit(1);
 			}
 			break;
 		case 'j':
 			maxjobs = strtol(optarg, &end, 10);
-			if (maxjobs < 0 || **end) {
+			if (maxjobs < 0 || *end) {
 				fputs("invalid maxjobs (-j)\n", stderr);
 				exit(1);
 			}
