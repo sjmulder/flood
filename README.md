@@ -25,7 +25,7 @@ using single characters:
 
 A tally of the number of invocations, successes and failures is printed
 when the program terminates, by *SIGINT* (*Ctrl+C*) or otherwise, or when
-sent *SIGINT* (*Ctrl+T*) on supported systems like BSD and macOS.
+sent *SIGINFO* (*Ctrl+T*) on supported systems like BSD and macOS.
 
 The following options are supported:
 
