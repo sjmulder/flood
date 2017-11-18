@@ -13,6 +13,9 @@
 #include <signal.h>
 #include <limits.h>
 
+#define ELPOLL 0
+#define ELWAIT 1
+
 static const char usage[] =
 "usage: flood [-d delay] [-j maxjobs] [-n count] command [argument ...]\n";
 
@@ -98,26 +101,6 @@ startone(void)
 	}
 }
 
-static int
-drainone(int bblock)
-{
-	int status;
-
-	if (waitpid(0, &status, bblock ? 0 : WNOHANG) <= 0)
-		return -1;
-
-	njobs--;
-	if (status) {
-		nfailed++;
-		write(STDOUT_FILENO, "!", 1);
-	} else {
-		ngood++;
-		write(STDOUT_FILENO, "*", 1);
-	}
-
-	return 0;
-}
-
 static void
 pstatus(void)
 {
@@ -140,6 +123,58 @@ pstatus(void)
 	}
 }
 
+static int
+evtloop(int flags)
+{
+	int status, waitflags;
+
+	while (1) {
+		if (bsigint) {
+			pstatus();
+
+			/* exit with proper signal status */
+			signal(SIGINT, SIG_DFL);
+			raise(SIGINT);
+			exit(1); /* fallback */
+		}
+#ifdef SIGINFO
+		if (bsiginfo) {
+			pstatus();
+			bsiginfo = 0;
+		}
+#endif
+		waitflags = (flags & ELWAIT) ? 0 : WNOHANG;
+		switch (waitpid(0, &status, waitflags)) {
+		case -1:
+			switch (errno) {
+			case EINTR:
+				break;
+			case ECHILD:
+				/* only a problem if we're blocking for one */
+				return (flags & ELWAIT) ? -1 : 0;
+			default:
+				perror(NULL);
+				exit(1);
+			}
+			break;
+		case 0:
+			/* nothing pending (WNOHANG) */
+			return 0;
+		default:
+			/* child exited */
+			njobs--;
+			if (status) {
+				nfailed++;
+				write(STDOUT_FILENO, "!", 1);
+			} else {
+				ngood++;
+				write(STDOUT_FILENO, "*", 1);
+			}
+			break;
+		}
+	}
+}
+
 int
 main(int argc, char **argv)
 {
@@ -153,51 +188,26 @@ main(int argc, char **argv)
 	signal(SIGINFO, onsiginfo);
 #endif
 
-	while (!bsigint && (!maxtotal || njobs+nfailed+ngood < maxtotal)) {
+	while (!maxtotal || njobs+nfailed+ngood < maxtotal) {
+		while (maxjobs && njobs >= maxjobs)
+			evtloop(ELWAIT);
+
 		startone();
+		evtloop(ELPOLL);
 
 		if (delay) {
 			ts.tv_sec = delay / 1000;
 			ts.tv_nsec = (long)(delay % 1000) * 1000 * 1000;
-		}
 
-		do {
-			/* checking here too prevents completion/failure
-			   output to be written to the terminal by drainone()
-			   after ^C */
-			if (bsigint)
-				break;
-
-			/* poll for completions, blocking in case we've hit
-			   the user-set job limit */
-			while (drainone(maxjobs && njobs >= maxjobs) != -1)
-				;
-#ifdef SIGINFO
-			if (bsiginfo) {
-				pstatus();
-				bsiginfo = 0;
-			}
-#endif
-			/* the sleep will be interrupted by SIGCHLD or
-			   SIGINFO, so handle these and then try again to
-			   sleep the remaining time */
-		} while (delay && nanosleep(&ts, &ts) == -1 && errno == EINTR);
-	}
-
-	if (!bsigint) {
-		/* wait for all children */
-		while (!bsigint && drainone(1) != -1)
-			;
-		if (errno != ECHILD) {
-			perror(NULL);
-			return 1;
+			while (nanosleep(&ts, &ts) == -1 && errno == EINTR)
+				evtloop(ELPOLL);
 		}
 	}
+
+	/* wait for all children */
+	while (evtloop(ELWAIT) == 0)
+		;
 
 	pstatus();
-	signal(SIGINT, SIG_DFL); /* prevent race condition with next if */
-	if (bsigint)
-		raise(SIGINT);   /* for proper exit status */
-
 	return 0;
 }
