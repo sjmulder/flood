@@ -152,8 +152,10 @@ main(int argc, char **argv)
 	while (!bsigint && (!maxtotal || njobs+nfailed+ngood < maxtotal)) {
 		startone();
 
-		ts.tv_sec = delay / 1000;
-		ts.tv_nsec = (delay % 1000) * 1e6;
+		if (delay) {
+			ts.tv_sec = delay / 1000;
+			ts.tv_nsec = (delay % 1000) * 1e6;
+		}
 
 		do {
 			/* checking here too prevents completion/failure
@@ -175,7 +177,7 @@ main(int argc, char **argv)
 			/* the sleep will be interrupted by SIGCHLD or
 			   SIGINFO, so handle these and then try again to
 			   sleep the remaining time */
-		} while (nanosleep(&ts, &ts) == -1 && errno == EINTR);
+		} while (delay && nanosleep(&ts, &ts) == -1 && errno == EINTR);
 	}
 
 	if (!bsigint) {
