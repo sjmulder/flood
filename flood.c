@@ -128,6 +128,9 @@ evtloop(int flags)
 {
 	int status, waitflags;
 
+	/* block for one child if ELWAIT is set */
+	waitflags = (flags & ELWAIT) ? 0 : WNOHANG;
+
 	while (1) {
 		if (bsigint) {
 			pstatus();
@@ -143,15 +146,15 @@ evtloop(int flags)
 			bsiginfo = 0;
 		}
 #endif
-		waitflags = (flags & ELWAIT) ? 0 : WNOHANG;
 		switch (waitpid(0, &status, waitflags)) {
 		case -1:
 			switch (errno) {
 			case EINTR:
 				break;
 			case ECHILD:
-				/* only a problem if we're blocking for one */
-				return (flags & ELWAIT) ? -1 : 0;
+				/* only a problem if we're blocking for the
+				   first child because of ELWAIT */
+				return (waitflags & WNOHANG) ? 0 : -1;
 			default:
 				perror(NULL);
 				exit(1);
@@ -170,6 +173,9 @@ evtloop(int flags)
 				ngood++;
 				write(STDOUT_FILENO, "*", 1);
 			}
+
+			/* ELWAIT is honored */
+			waitflags = WNOHANG;
 			break;
 		}
 	}
