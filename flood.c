@@ -17,13 +17,13 @@ static const char usage[] =
 static char **cmdargs;
 static int delay = 100, maxjobs;
 static int numjobs, numfailed, numgood;
-static int bsigint;
+static volatile sig_atomic_t bsigint;
 
 static void onsigchld(int sig) { }
 static void onsigint(int sig)  { bsigint = 1; }
 
 #ifdef SIGINFO
-static int bsiginfo;
+static volatile sig_atomic_t bsiginfo;
 static void onsiginfo(int sig) { bsiginfo = 1; }
 #endif
 
