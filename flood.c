@@ -115,9 +115,9 @@ pstatus(void)
 	int goodpct, badpct;
 
 	if (maxjobs)
-		printf("running:   %6d/%d\n", numjobs, maxjobs);
+		printf("\nrunning:   %6d/%d\n", numjobs, maxjobs);
 	else
-		printf("running:   %6d\n", numjobs);
+		printf("\nrunning:   %6d\n", numjobs);
 
 	if (numgood + numfailed) {
 		goodpct = (numgood   * 100) / (numgood + numfailed);
@@ -174,9 +174,7 @@ main(int argc, char **argv)
 	}
 
 	/* only reached on SIGINT (^C) */
-	putchar('\n');
 	pstatus();
-
 	/* disable SIGINT handler and re-raise to exit with proper status */
 	signal(SIGINT, SIG_DFL);
 	raise(SIGINT);
