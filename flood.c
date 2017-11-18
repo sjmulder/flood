@@ -12,10 +12,10 @@
 #include <signal.h>
 
 static const char usage[] =
-"usage: flood [-d delay] [-j maxjobs] command [argument ...]\n";
+"usage: flood [-d delay] [-j maxjobs] [-n count] command [argument ...]\n";
 
-static char **cmdargs;                   /* command to run */
-static int delay = 100, maxjobs;         /* command line options */
+static char **cmdargs;                     /* command to run */
+static int delay = 100, maxjobs, maxtotal; /* command line options */
 static int njobs, nfailed, ngood;
 static volatile sig_atomic_t bsigint;
 
@@ -33,7 +33,7 @@ parseopts(int argc, char **argv)
 	int c;
 	char *end;
 
-	while ((c = getopt(argc, argv, "d:j:")) != -1) {
+	while ((c = getopt(argc, argv, "d:j:n:")) != -1) {
 		switch (c) {
 		case 'd':
 			delay = strtol(optarg, &end, 10);
@@ -46,6 +46,13 @@ parseopts(int argc, char **argv)
 			maxjobs = strtol(optarg, &end, 10);
 			if (maxjobs < 0 || *end) {
 				fputs("invalid maxjobs (-j)\n", stderr);
+				exit(1);
+			}
+			break;
+		case 'n':
+			maxtotal = strtol(optarg, &end, 10);
+			if (maxtotal < 0 || *end) {
+				fputs("invalid count (-n)\n", stderr);
 				exit(1);
 			}
 			break;
@@ -142,7 +149,7 @@ main(int argc, char **argv)
 	signal(SIGINFO, onsiginfo);
 #endif
 
-	while (!bsigint) {
+	while (!bsigint && (!maxtotal || njobs+nfailed+ngood < maxtotal)) {
 		startone();
 
 		ts.tv_sec = delay / 1000;
@@ -171,11 +178,20 @@ main(int argc, char **argv)
 		} while (nanosleep(&ts, &ts) == -1 && errno == EINTR);
 	}
 
-	/* only reached on SIGINT (^C) */
-	pstatus();
-	/* disable SIGINT handler and re-raise to exit with proper status */
-	signal(SIGINT, SIG_DFL);
-	raise(SIGINT);
+	if (!bsigint) {
+		/* wait for all children */
+		while (!bsigint && drainone(1) != -1)
+			;
+		if (errno != ECHILD) {
+			perror(NULL);
+			return 1;
+		}
+	}
 
-	return 0; /* should not be reached */
+	pstatus();
+	signal(SIGINT, SIG_DFL); /* prevent race condition with next if */
+	if (bsigint)
+		raise(SIGINT);   /* for proper exit status */
+
+	return 0;
 }
