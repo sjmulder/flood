@@ -49,12 +49,12 @@ prints a tally, and exits.
 Examlpes
 --------
 
-Flood example.com with 100 requests using curl(1) (don't do this), then
+Flood *example.com* with 100 requests using *curl(1)* (don't do this), then
 print a tally:
 
     $ flood -n100 curl example.com
 
-Repeatedly run the sleep(1) utility as quickly as possible, but never
+Repeatedly run the *sleep(1)* utility as quickly as possible, but never
 have more than 10 running at the same time:
 
     $ flood -d0 -j10 sleep 1
