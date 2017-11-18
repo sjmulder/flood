@@ -16,7 +16,7 @@ static const char usage[] =
 
 static char **cmdargs;                   /* command to run */
 static int delay = 100, maxjobs;         /* command line options */
-static int numjobs, numfailed, numgood;
+static int njobs, nfailed, ngood;
 static volatile sig_atomic_t bsigint;
 
 static void onsigchld(int sig) { } /* just needed to interrupt nanosleep */
@@ -67,7 +67,7 @@ startone(void)
 {
 	int outfd;
 
-	numjobs++;
+	njobs++;
 	write(STDOUT_FILENO, ".", 1);
 
 	switch (fork()) {
@@ -95,12 +95,12 @@ drainone(int bblock)
 	if (waitpid(0, &status, bblock ? 0 : WNOHANG) <= 0)
 		return -1;
 
-	numjobs--;
+	njobs--;
 	if (status) {
-		numfailed++;
+		nfailed++;
 		write(STDOUT_FILENO, "!", 1);
 	} else {
-		numgood++;
+		ngood++;
 		write(STDOUT_FILENO, "*", 1);
 	}
 
@@ -113,16 +113,16 @@ pstatus(void)
 	int goodpct, badpct;
 
 	if (maxjobs)
-		printf("\nrunning:   %6d/%d\n", numjobs, maxjobs);
+		printf("\nrunning:   %6d/%d\n", njobs, maxjobs);
 	else
-		printf("\nrunning:   %6d\n", numjobs);
+		printf("\nrunning:   %6d\n", njobs);
 
-	if (numgood + numfailed) {
-		goodpct = (numgood   * 100) / (numgood + numfailed);
-		badpct  = (numfailed * 100) / (numgood + numfailed);
+	if (ngood + nfailed) {
+		goodpct = (ngood   * 100) / (ngood + nfailed);
+		badpct  = (nfailed * 100) / (ngood + nfailed);
 
-		printf("completed: %6d (%3d%%)\n", numgood, goodpct);
-		printf("failed:    %6d (%3d%%)\n", numfailed, badpct);
+		printf("completed: %6d (%3d%%)\n", ngood, goodpct);
+		printf("failed:    %6d (%3d%%)\n", nfailed, badpct);
 	} else {
 		puts("completed:      0");
 		puts("failed:         0");
@@ -157,7 +157,7 @@ main(int argc, char **argv)
 
 			/* poll for completions, blocking in case we've hit
 			   the user-set job limit */
-			while (drainone(maxjobs && numjobs >= maxjobs) != -1)
+			while (drainone(maxjobs && njobs >= maxjobs) != -1)
 				;
 #ifdef SIGINFO
 			if (bsiginfo) {
