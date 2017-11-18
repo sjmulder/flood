@@ -1,4 +1,5 @@
-#define _BSD_SOURCE
+#define _BSD_SOURCE     /* for GNU libc, deprecated */
+#define _DEFAULT_SOURCE /* for GNU libc */
 
 #include <stdio.h>
 #include <stdlib.h>
