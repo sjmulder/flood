@@ -16,12 +16,12 @@ Usage
 **flood** runs a command in quick succession, summarily reporting results
 using single characters:
 
-Character | Meaning
-----------+---------------------------------------
-`.`       | Command invoked
-`*`       | Command completed successfully
-`!`       | Command completed with an error status
-`@`       | Error invoking the command
+| Character | Meaning                                |
+|-----------|----------------------------------------|
+| `.`       | Command invoked                        |
+| `*`       | Command completed successfully         |
+| `!`       | Command completed with an error status |
+| `@`       | Error invoking the command             |
 
 A tally of the number of invocations, successes and failures is printed
 when the program terminates, by SIGINT (Ctrl+C) or otherwise, or when
