@@ -68,8 +68,7 @@ startone(void)
 	int outfd;
 
 	numjobs++;
-	putchar('.');
-	fflush(stdout);
+	write(STDOUT_FILENO, ".", 1);
 
 	switch (fork()) {
 	case -1:
@@ -99,13 +98,12 @@ drainone(int bblock)
 	numjobs--;
 	if (status) {
 		numfailed++;
-		putchar('!');
+		write(STDOUT_FILENO, "!", 1);
 	} else {
 		numgood++;
-		putchar('*');
+		write(STDOUT_FILENO, "*", 1);
 	}
 
-	fflush(stdout);
 	return 0;
 }
 
