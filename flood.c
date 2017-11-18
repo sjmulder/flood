@@ -123,6 +123,10 @@ pstatus(void)
 	}
 }
 
+/* Handles pending signal flags and completed child pressess. If the ELBLOCK
+   flag is set, the function blocks until at least one child process exits.
+
+   Returns 0 on success, -1 if a problem occured. */
 static int
 evtloop(int flags)
 {
@@ -150,6 +154,7 @@ evtloop(int flags)
 		case -1:
 			switch (errno) {
 			case EINTR:
+				/* continue to handle signal and try again */
 				break;
 			case ECHILD:
 				/* only a problem if we're blocking for the
@@ -161,7 +166,7 @@ evtloop(int flags)
 			}
 			break;
 		case 0:
-			/* nothing pending (WNOHANG) */
+			/* nothing pending (WNOHANG only), we're done */
 			return 0;
 		default:
 			/* child exited */
@@ -205,6 +210,9 @@ main(int argc, char **argv)
 			ts.tv_sec = delay / 1000;
 			ts.tv_nsec = (long)(delay % 1000) * 1000 * 1000;
 
+			/* nanosleep() will be interrupted by SIGCHLD when
+			   a child terminates; which will be handled by
+			   evtloop() */
 			while (nanosleep(&ts, &ts) == -1 && errno == EINTR)
 				evtloop(ELPOLL);
 		}
