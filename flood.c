@@ -14,12 +14,12 @@
 static const char usage[] =
 "usage: flood [-d delay] [-j maxjobs] command [argument ...]\n";
 
-static char **cmdargs;
-static int delay = 100, maxjobs;
+static char **cmdargs;                   /* command to run */
+static int delay = 100, maxjobs;         /* command line options */
 static int numjobs, numfailed, numgood;
 static volatile sig_atomic_t bsigint;
 
-static void onsigchld(int sig) { }
+static void onsigchld(int sig) { } /* just needed to interrupt nanosleep */
 static void onsigint(int sig)  { bsigint = 1; }
 
 #ifdef SIGINFO
@@ -68,7 +68,6 @@ startone(void)
 	int outfd;
 
 	numjobs++;
-
 	putchar('.');
 	fflush(stdout);
 
@@ -139,7 +138,7 @@ main(int argc, char **argv)
 
 	parseopts(argc, argv);
 
-	signal(SIGCHLD, onsigchld);
+	signal(SIGCHLD, onsigchld); /* to interrupt nanosleep() */
 	signal(SIGINT, onsigint);
 #ifdef SIGINFO
 	signal(SIGINFO, onsiginfo);
@@ -152,8 +151,14 @@ main(int argc, char **argv)
 		ts.tv_nsec = (delay % 1000) * 1e6;
 
 		do {
+			/* checking here too prevents completion/failure
+			   output to be written to the terminal by drainone()
+			   after ^C */
 			if (bsigint)
 				break;
+
+			/* poll for completions, blocking in case we've hit
+			   the user-set job limit */
 			while (drainone(maxjobs && numjobs >= maxjobs) != -1)
 				;
 #ifdef SIGINFO
@@ -162,12 +167,19 @@ main(int argc, char **argv)
 				bsiginfo = 0;
 			}
 #endif
+			/* the sleep will be interrupted by SIGCHLD or
+			   SIGINFO, so handle these and then try again to
+			   sleep the remaining time */
 		} while (nanosleep(&ts, &ts) == -1 && errno == EINTR);
 	}
 
+	/* only reached on SIGINT (^C) */
 	putchar('\n');
 	pstatus();
+
+	/* disable SIGINT handler and re-raise to exit with proper status */
 	signal(SIGINT, SIG_DFL);
 	raise(SIGINT);
-	return 0;
+
+	return 0; /* should not be reached */
 }
