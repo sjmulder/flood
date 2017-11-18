@@ -10,13 +10,15 @@ install: all
 	install -d $(PREFIX)/bin \
 		   $(PREFIX)/share/man/man1 \
 		   $(PREFIX)/share/doc/flood
-	install flood $(PREFIX)/bin/
+	install flood      $(PREFIX)/bin/
 	install flood.1.gz $(PREFIX)/share/man/man1/
+	install README.md  $(PREFIX)/share/doc/flood/
 	install LICENSE.md $(PREFIX)/share/doc/flood/
 
 uninstall:
 	rm -f $(PREFIX)/bin/flood \
 	      $(PREFIX)/share/man/man1/flood.1.gz \
+	      $(PREFIX)/share/doc/flood/README.md \
 	      $(PREFIX)/share/doc/flood/LICENSE.md
 	-rmdir $(PREFIX)/share/doc/flood/
 
