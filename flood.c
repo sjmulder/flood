@@ -10,6 +10,7 @@
 #include <string.h>
 #include <time.h>
 #include <signal.h>
+#include <limits.h>
 
 static const char usage[] =
 "usage: flood [-d delay] [-j maxjobs] [-n count] command [argument ...]\n";
@@ -27,34 +28,36 @@ static volatile sig_atomic_t bsiginfo;
 static void onsiginfo(int sig) { bsiginfo = 1; }
 #endif
 
+static int
+xstrtoi(char *val, char *name)
+{
+	long lval;
+	char *end;
+
+	lval = strtol(val, &end, 10);
+	if (lval < 0 || lval > INT_MAX || *end) {
+		fprintf(stderr, "invalid %s\n", name);
+		exit(1);
+	}
+
+	return (int)lval;
+}
+
 static void
 parseopts(int argc, char **argv)
 {
 	int c;
-	char *end;
 
 	while ((c = getopt(argc, argv, "d:j:n:")) != -1) {
 		switch (c) {
 		case 'd':
-			delay = strtol(optarg, &end, 10);
-			if (delay < 0 || *end) {
-				fputs("invalid delay (-d)\n", stderr);
-				exit(1);
-			}
+			delay = xstrtoi(optarg, "delay (-d)");
 			break;
 		case 'j':
-			maxjobs = strtol(optarg, &end, 10);
-			if (maxjobs < 0 || *end) {
-				fputs("invalid maxjobs (-j)\n", stderr);
-				exit(1);
-			}
+			maxjobs = xstrtoi(optarg, "maxjobs (-j)");
 			break;
 		case 'n':
-			maxtotal = strtol(optarg, &end, 10);
-			if (maxtotal < 0 || *end) {
-				fputs("invalid count (-n)\n", stderr);
-				exit(1);
-			}
+			maxtotal = xstrtoi(optarg, "count (-n)");
 			break;
 		default:
 			fputs(usage, stderr);
