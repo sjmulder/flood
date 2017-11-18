@@ -1,0 +1,68 @@
+.\" flood.1 - Copyright (c) 2017, Sijmen J. Mulder (see LICENSE.md)
+.Dd November 18, 2017
+.Dt FLOOD 1
+.Os
+.Sh NAME
+.Nm flood
+.Nd rapidly repeat a command
+.Sh SYNOPSIS
+.Nm flood
+.Op Fl d Ar delay
+.Op Fl j Ar maxjobs
+.Op Fl n Ar count
+.Ar command
+.Op Ar argument ...
+.Sh DESCRIPTION
+.Nm
+runs a command in quick succession,
+summarily reporting results using single characters:
+.Bl -column -offset indent ".Sy Character" ".Sy Meaning"
+.It Sy Character Ta Sy Meaning
+.It Li . Ta Command invoked
+.It Li * Ta Command completed successfully
+.It Li ! Ta Command completed with an error status
+.It Li @ Ta Error invoking the command
+.El
+.Pp
+A tailly of the number of invocations, successes and failures
+is printed when the program terminates, by
+.Dv SIGINT
+.Pq Em Ctrl+C
+or otherwise, or when sent
+.Dv SIGINT
+.Pq Em Ctrl+T
+on supported systems like BSD and macOS.
+.Pp
+The following options are supported:
+.Bl -tag -width Ds
+.It Fl d Ar delay
+Minimum delay between command executions, in miliseconds.
+Defaults to 10.
+.It Fl j Ar maxjobs
+Limits the number of simultaneously running commands.
+Once reached,
+.Nm
+waits for previously invoked commands to complete before starting a new one.
+.It Fl n Ar count
+Limits the total number of command invocations.
+Once reached,
+.Nm
+waits for all previously launched command to complete,
+prints a tailly, and exits.
+.El
+.Sh EXAMPLES
+Flood example.com with 100 requests using
+.Xr curl 1
+(don't do this), then print a tailly:
+.Pp
+.Dl $ flood -n100 curl example.com
+.Pp
+Repeatedly run the
+.Xr sleep 1
+utility as quickly as possible,
+but never have more than 10 running at the same time:
+.Pp
+.Dl $ flood -d0 -j10 sleep 1
+.Sh AUTHORS
+.An Sijmen J. Mulder
+.Aq Mt ik@sjmulder.nl .
