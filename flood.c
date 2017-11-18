@@ -1,3 +1,5 @@
+/* flood.c - Copyright (c) 2017, Sijmen J. Mulder (see LICENSE.md) */
+
 #define _BSD_SOURCE     /* for GNU libc, deprecated */
 #define _DEFAULT_SOURCE /* for GNU libc */
 
