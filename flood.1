@@ -20,10 +20,10 @@ Output is discarded,
 but results are summarily reported using single characters:
 .Bl -column -offset indent ".Sy Character" ".Sy Meaning"
 .It Sy Character Ta Sy Meaning
-.It Li . Ta Command invoked
-.It Li * Ta Command completed successfully
-.It Li ! Ta Command completed with an error status
-.It Li @ Ta Error invoking the command
+.It . Ta Command invoked
+.It * Ta Command completed successfully
+.It ! Ta Command completed with an error status
+.It @ Ta Error invoking the command
 .El
 .Pp
 A tally of the number of invocations, successes and failures
@@ -72,8 +72,8 @@ utility as quickly as possible,
 but never have more than 10 running at the same time:
 .Pp
 .Dl $ flood -d0 -j10 sleep 1
+.Sh SEE ALSO
+.Xr ping 1 Fl f
 .Sh AUTHORS
 .An Sijmen J. Mulder
 .Aq Mt ik@sjmulder.nl .
-.Sh SEE ALSO
-.Xr ping 1 Fl f
