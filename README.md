@@ -1,7 +1,7 @@
 flood
 =====
 
-Rapidly repeat a command.
+Rapidly invoke (*flood*) a command.
 
 [![asciicast](https://asciinema.org/a/sriM9Wrp44rkzPsC7IRYsSBrA.png)](https://asciinema.org/a/sriM9Wrp44rkzPsC7IRYsSBrA)
 
@@ -13,8 +13,9 @@ Usage
 
 **flood** [**-d** *delay*] [**-j** *maxjobs*] [**-n** *count*] *command* [*argument* ...]
 
-**flood** runs a command in quick succession, summarily reporting results
-using single characters:
+**flood** repeatedly invokes a command with a short delay between invocations.
+It does not wait for previous invocations to finish. Output is discarded,
+but results are summarily reported using single characters:
 
 | Character | Meaning                                |
 |-----------|----------------------------------------|
@@ -27,24 +28,26 @@ A tally of the number of invocations, successes and failures is printed
 when the program terminates, by *SIGINT* (Ctrl+C) or otherwise, or when
 sent *SIGINFO* (Ctrl+T) on supported systems like BSD and macOS.
 
+The name and inspiration come from the *ping(1)* **-f** option.
+
 The following options are supported:
 
 **-d** *delay*
 
 Minimum delay between command executions, in miliseconds.
-Defaults to 100.
+Defaults to 100 (10 per second).
 
 **-j** *maxjobs*
 
 Limits the number of simultaneously running commands.  Once
 reached, flood waits for previously invoked commands to complete
-before starting a new one.
+before starting a new one. Defaults to 0, which means no limit.
 
 **-n** *count*
 
 Limits the total number of command invocations.  Once reached,
 flood waits for all previously launched commands to complete,
-prints a tally, and exits.
+prints a tally, and exits. Defaults to 0, which means no limit.
 
 Examlpes
 --------
