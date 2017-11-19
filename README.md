@@ -32,7 +32,7 @@ The following options are supported:
 **-d** *delay*
 
 Minimum delay between command executions, in miliseconds.
-Defaults to 10.
+Defaults to 100.
 
 **-j** *maxjobs*
 
