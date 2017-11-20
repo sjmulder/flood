@@ -7,7 +7,7 @@ Rapidly invoke (*flood*) a command.
 
  * Website: https://github.com/sjmulder/flood
  * Video: https://asciinema.org/a/sriM9Wrp44rkzPsC7IRYsSBrA
- * Homebrew tap (macOS): https://github.com/nickolasburr/homebrew-pf
+ * Homebrew tap (macOS): https://github.com/nickolasburr/homebrew-pfa
 
 Usage
 -----
