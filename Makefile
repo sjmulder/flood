@@ -1,28 +1,22 @@
-PREFIX ?= /usr/local
-CFLAGS += -ansi -Wall
+# BSD conventions by default, override to taste
+prefix  ?= /usr/local
+bindir  ?= $(prefix)/bin
+man1dir ?= $(prefix)/man/man1
 
-all: flood flood.1.gz
+CFLAGS += -ansi -g
+CFLAGS += -Wall -Wextra -pedantic
+
+all: flood
 
 clean:
-	rm -f flood flood.1.gz
+	rm -f flood
 
 install: all
-	install -d $(PREFIX)/bin \
-		   $(PREFIX)/share/man/man1 \
-		   $(PREFIX)/share/doc/flood
-	install flood      $(PREFIX)/bin/
-	install flood.1.gz $(PREFIX)/share/man/man1/
-	install README.md  $(PREFIX)/share/doc/flood/
-	install LICENSE.md $(PREFIX)/share/doc/flood/
+	install -d $(bindir) $(man1dir)
+	install flood $(bindir)/
+	install flood.1 (man1dir)/
 
 uninstall:
-	rm -f $(PREFIX)/bin/flood \
-	      $(PREFIX)/share/man/man1/flood.1.gz \
-	      $(PREFIX)/share/doc/flood/README.md \
-	      $(PREFIX)/share/doc/flood/LICENSE.md
-	-rmdir $(PREFIX)/share/doc/flood/
-
-flood.1.gz: flood.1
-	gzip -kf flood.1
+	rm -f $(bindir)/flood $(man1dir)/flood.1
 
 .PHONY: all clean install uninstall
