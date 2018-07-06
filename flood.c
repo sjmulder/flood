@@ -25,12 +25,12 @@ static int delay = 100, maxjobs, maxtotal; /* command line options */
 static int njobs, nfailed, ngood;
 static volatile sig_atomic_t bsigint;
 
-static void onsigchld(int sig) { } /* just needed to interrupt nanosleep */
-static void onsigint(int sig)  { bsigint = 1; }
+static void onsigchld(int sig) { (void)sig; } /* to interrupt nanosleep */
+static void onsigint(int sig)  { (void)sig; bsigint = 1; }
 
 #ifdef SIGINFO
 static volatile sig_atomic_t bsiginfo;
-static void onsiginfo(int sig) { bsiginfo = 1; }
+static void onsiginfo(int sig) { (void)sig; bsiginfo = 1; }
 #endif
 
 static int
