@@ -1,7 +1,5 @@
-# BSD conventions by default, override to taste
-prefix  ?= /usr/local
-bindir  ?= $(prefix)/bin
-man1dir ?= $(prefix)/man/man1
+PREFIX    ?= /usr/local
+MANPREFIX ?= $(PREFIX)/man
 
 CFLAGS += -ansi -g
 CFLAGS += -D_POSIX_C_SOURCE=199309L
@@ -13,11 +11,12 @@ clean:
 	rm -f flood
 
 install: all
-	install -d $(bindir) $(man1dir)
-	install flood $(bindir)/
-	install flood.1 (man1dir)/
+	install -d $(DESTDIR)$(PREFIX)/bin $(DESTDIR)$(MANPREFIX)/man1
+	install flood   $(DESTDIR)$(PREFIX)/bin/
+	install flood.1 $(DESTDIR)$(MANPREFIX)/man1/
 
 uninstall:
-	rm -f $(bindir)/flood $(man1dir)/flood.1
+	rm -f $(DESTDIR)$(PREFIX)/bin/flood
+	rm -f $(DESTDIR)$(MANPREFIX)/man1/flood.1
 
 .PHONY: all clean install uninstall
