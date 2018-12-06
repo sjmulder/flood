@@ -1,0 +1,3 @@
+language: c
+script: make all
+os: ['linux', 'osx']
