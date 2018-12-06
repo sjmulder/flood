@@ -13,8 +13,8 @@ clean:
 
 install: all
 	install -d $(DESTDIR)$(PREFIX)/bin $(DESTDIR)$(MANPREFIX)/man1
-	install flood   $(DESTDIR)$(PREFIX)/bin/
-	install flood.1 $(DESTDIR)$(MANPREFIX)/man1/
+	install -m755 flood   $(DESTDIR)$(PREFIX)/bin/
+	install -m644 flood.1 $(DESTDIR)$(MANPREFIX)/man1/
 
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/flood

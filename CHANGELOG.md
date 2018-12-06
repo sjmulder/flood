@@ -2,6 +2,7 @@
 
  - DESTDIR support in Makefile. Also, 'make install' variables 'prefix',
    'bindir' and 'man1dir' changed to PREFIX and MANPREFIX.
+ - Explicit file permissions in `make install`.
 
 ## 1.0.1 (2018-07-22)
 
